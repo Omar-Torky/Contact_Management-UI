@@ -40,7 +40,18 @@ let searchContact key =
         results |> Map.iter (fun _ contact -> printfn "%A" contact)
 
 // Rahma - Edit function
-
+let editContact phoneNumber newName newPhone newEmail =
+    match contacts.TryFind(phoneNumber) with
+    | Some _ ->
+        if not (isValidPhoneNumber newPhone) then
+            printfn "Invalid phone number format."
+        elif not (isValidEmail newEmail) then
+            printfn "Invalid email format."
+        else
+            let updatedContact = { Name = newName; PhoneNumber = newPhone; Email = newEmail }
+            contacts <- contacts.Remove(phoneNumber).Add(newPhone, updatedContact)
+            printfn "Contact updated: %A" updatedContact
+    | None -> printfn "Contact not found."
 
 
 
@@ -97,6 +108,35 @@ let createForm () =
 
 
 // Rahma - Edit Button
+let btnEdit = new Button(Text = "Edit Contact", Top = 220, Left = 150, Width = 500, Height = 40)
+btnEdit.Click.Add(fun _ ->
+    let phoneToEdit = InputBox("Enter Phone Number of the Contact to Edit:", "Edit Contact")
+
+    if not (String.IsNullOrWhiteSpace phoneToEdit) then
+        match contacts.TryFind(phoneToEdit) with
+        | Some contact ->
+            let newName = InputBox($"Enter New Name (Current: {contact.Name}):", "Edit Contact")
+            let newPhone = InputBox($"Enter New Phone (Current: {contact.PhoneNumber}):", "Edit Contact")
+            let newEmail = InputBox($"Enter New Email (Current: {contact.Email}):", "Edit Contact")
+
+ 
+            if String.IsNullOrWhiteSpace(newName) || String.IsNullOrWhiteSpace(newPhone) || String.IsNullOrWhiteSpace(newEmail) then
+                MessageBox.Show("All fields are required.", "Error") |> ignore
+
+            elif not (isValidPhoneNumber newPhone) then
+                MessageBox.Show("Invalid phone number format.", "Error") |> ignore
+    
+            elif not (isValidEmail newEmail) then
+                MessageBox.Show("Invalid email format.", "Error") |> ignore
+            
+            else
+                editContact phoneToEdit newName newPhone newEmail
+                MessageBox.Show("Contact Edited Successfully.", "Success") |> ignore
+        | None ->
+            MessageBox.Show("No Contact Found With This Phone Number.", "Error") |> ignore
+    else
+        MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
+)
 
 
 
