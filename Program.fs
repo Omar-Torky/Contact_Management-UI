@@ -19,6 +19,14 @@ let isValidEmail (email: string) =
 // Toqa - add function
 
 // Basma - Search function
+let searchContact key =
+    let results = 
+        contacts 
+        |> Map.filter (fun _ contact -> contact.Name.Contains(key : string) || contact.PhoneNumber.Contains(key : string))
+    if results.IsEmpty then
+        printfn "No contacts found."
+    else
+        results |> Map.iter (fun _ contact -> printfn "%A" contact)
 
 // Rahma - Edit function
 
@@ -65,6 +73,27 @@ let createForm () =
 
 
 // Basma - Search Button
+let btnSearch = new Button(Text = "Search Contact", Top = 300, Left = 150, Width = 500, Height = 40)
+    btnSearch.Click.Add(fun _ ->
+        let key = InputBox("Enter Name or Phone Number to Search:", "Search Contact")
+        
+        if not (String.IsNullOrWhiteSpace key) then
+            let results = 
+                contacts
+                |> Map.filter (fun _ contact -> 
+                    contact.Name.Contains(key) || contact.PhoneNumber.Contains(key))
+
+            if results.IsEmpty then
+                MessageBox.Show("No contacts found.", "Search Result") |> ignore
+            else
+                let contactList = 
+                    results
+                    |> Map.fold (fun acc _ contact -> acc + $"{contact.Name} - {contact.PhoneNumber}\n") ""
+
+                MessageBox.Show($"Found contacts:\n{contactList}", "Search Result") |> ignore
+        else
+            MessageBox.Show("Please enter a valid search query.", "Error") |> ignore
+    )
 
 
 
