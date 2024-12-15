@@ -94,12 +94,6 @@ let deleteContact (phoneNumber: string) =
         printfn "File not found."
  
 
-let saveContactsToFile (filePath: string) =
-    use writer = new StreamWriter(filePath, append = true)
-    contacts |> Map.iter (fun _ contact ->
-        writer.WriteLine($"{contact.Name}\t{contact.PhoneNumber}\t{contact.Email}\n")
-    )
-    printfn "Contacts saved to %s" filePath
 
 // Youssef - load contacts function
 let loadContactsFromFile (filePath: string) =
@@ -142,7 +136,10 @@ let createForm () =
 
 
 
-// Toqa - add Button
+
+    //Add contact BTN
+    //-------------------
+
     let btnAdd = new Button(Text = "Add Contact", Top = 140, Left = 150, Width = 500, Height = 40)
     btnAdd.Click.Add(fun _ ->
         let name = InputBox("Enter Name:", "Add Contact")
@@ -163,63 +160,72 @@ let createForm () =
     )
 
 
+    //Edit contact BTN
+    //-------------------
 
-// Rahma - Edit Button
-let btnEdit = new Button(Text = "Edit Contact", Top = 220, Left = 150, Width = 500, Height = 40)
-btnEdit.Click.Add(fun _ ->
-    let phoneToEdit = InputBox("Enter Phone Number of the Contact to Edit:", "Edit Contact")
+    let btnEdit = new Button(Text = "Edit Contact", Top = 220, Left = 150, Width = 500, Height = 40)
+    btnEdit.Click.Add(fun _ ->
+        let phoneToEdit = InputBox("Enter Phone Number of the Contact to Edit:", "Edit Contact")
 
-    if not (String.IsNullOrWhiteSpace phoneToEdit) then
-        let newName = InputBox("Enter New Name:", "Edit Contact")
-        let newPhone = InputBox("Enter New Phone:", "Edit Contact")
-        let newEmail = InputBox("Enter New Email:", "Edit Contact")
+        if not (String.IsNullOrWhiteSpace phoneToEdit) then
+            let newName = InputBox("Enter New Name:", "Edit Contact")
+            let newPhone = InputBox("Enter New Phone:", "Edit Contact")
+            let newEmail = InputBox("Enter New Email:", "Edit Contact")
 
-        // Check if new fields are valid before editing the contact
-        if String.IsNullOrWhiteSpace(newName) || String.IsNullOrWhiteSpace(newPhone) || String.IsNullOrWhiteSpace(newEmail) then
-            MessageBox.Show("All fields are required.", "Error") |> ignore
-        elif not (isValidPhoneNumber newPhone) then
-            MessageBox.Show("Invalid phone number format.", "Error") |> ignore
-        elif not (isValidEmail newEmail) then
-            MessageBox.Show("Invalid email format.", "Error") |> ignore
+            // Check if new fields are valid before editing the contact
+            if String.IsNullOrWhiteSpace(newName) || String.IsNullOrWhiteSpace(newPhone) || String.IsNullOrWhiteSpace(newEmail) then
+                MessageBox.Show("All fields are required.", "Error") |> ignore
+            elif not (isValidPhoneNumber newPhone) then
+                MessageBox.Show("Invalid phone number format.", "Error") |> ignore
+            elif not (isValidEmail newEmail) then
+                MessageBox.Show("Invalid email format.", "Error") |> ignore
+            else
+                // If all fields are valid, proceed to edit the contact
+                editContact phoneToEdit newName newPhone newEmail
+                MessageBox.Show("Contact updated successfully.", "Success") |> ignore
         else
-            // If all fields are valid, proceed to edit the contact
-            editContact phoneToEdit newName newPhone newEmail
-            MessageBox.Show("Contact updated successfully.", "Success") |> ignore
-    else
-        MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
-)
+            MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
+    )
     
 
 
-
-// Basma - Search Button
-let btnSearch = new Button(Text = "Search Contact", Top = 300, Left = 150, Width = 500, Height = 40)
+    //Search contact BTN
+    //---------------------
+    let btnSearch = new Button(Text = "Search Contact", Top = 300, Left = 150, Width = 500, Height = 40)
     btnSearch.Click.Add(fun _ ->
         let key = InputBox("Enter Name or Phone Number to Search:", "Search Contact")
         
         if not (String.IsNullOrWhiteSpace key) then
-            let results = 
-                contacts
-                |> Map.filter (fun _ contact -> 
-                    contact.Name.Contains(key) || contact.PhoneNumber.Contains(key))
+            try
+                if File.Exists(filePath) then
+                    let fileContent = File.ReadAllLines(filePath)
+                    let results =
+                        fileContent
+                        |> Array.filter (fun line -> 
+                            line.Contains(key, StringComparison.OrdinalIgnoreCase)) // Case-insensitive search
 
-            if results.IsEmpty then
-                MessageBox.Show("No contacts found.", "Search Result") |> ignore
-            else
-                let contactList = 
-                    results
-                    |> Map.fold (fun acc _ contact -> acc + $"{contact.Name} - {contact.PhoneNumber}\n") ""
+                    if results.Length = 0 then
+                        MessageBox.Show("No contacts found.", "Search Result") |> ignore
+                    else
+                        let resultMessage = 
+                            results |> Array.fold (fun acc line -> acc + line + "\n") ""
 
-                MessageBox.Show($"Found contacts:\n{contactList}", "Search Result") |> ignore
+                        MessageBox.Show($"Found contacts:\n{resultMessage}", "Search Result") |> ignore
+                else
+                    MessageBox.Show("File not found. Please save some contacts first.", "Error") |> ignore
+            with
+            | :? IOException as ex ->
+                MessageBox.Show($"An error occurred while reading the file: {ex.Message}", "Error") |> ignore
+            | ex ->
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error") |> ignore
         else
             MessageBox.Show("Please enter a valid search query.", "Error") |> ignore
     )
 
 
-
-
-// Bassant - Delete Button
-let btnDelete = new Button(Text = "Delete Contact", Top = 380, Left = 150, Width = 500, Height = 40)
+    //Delete contact BTN
+    //---------------------
+    let btnDelete = new Button(Text = "Delete Contact", Top = 380, Left = 150, Width = 500, Height = 40)
     btnDelete.Click.Add(fun _ ->
         let phone = InputBox("Enter The Number You Wanna Delete:", "Delete Contact")
         
@@ -227,47 +233,35 @@ let btnDelete = new Button(Text = "Delete Contact", Top = 380, Left = 150, Width
             MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
         elif not (isValidPhoneNumber phone) then
             MessageBox.Show("Invalid phone number.", "Error") |> ignore
-        else
-            if contacts.ContainsKey(phone) then
-                deleteContact phone
-                MessageBox.Show($"Contact with phone number {phone} deleted successfully.", "Delete Contact") |> ignore
-            else
-                MessageBox.Show($"No contact found with phone number {phone}.", "Error") |> ignore
+         else
+        try
+            deleteContact phone
+            MessageBox.Show($"Operation completed. Check console for details.", "Delete Contact") |> ignore
+        with
+        | :? IOException as ex ->
+            MessageBox.Show($"An error occurred while accessing the file: {ex.Message}", "Error") |> ignore
+        | ex ->
+            MessageBox.Show($"Unexpected error: {ex.Message}", "Error") |> ignore
     )
 
 
 
 
+    //Load contact BTN
+    //-------------------
+    let btnLoadContacts = new Button(Text = "View Contacts", Top = 460, Left = 150, Width = 500, Height = 40)
 
-
-// Youssef - load contacts Button
-let btnLoadContacts = new Button(Text = "View Contacts", Top = 460, Left = 150, Width = 500, Height = 40)
     btnLoadContacts.Click.Add(fun _ ->
         try
-            let filePath = File.ReadAllText("File.txt")
+            let fileContents = File.ReadAllText(filePath)
 
-            // loadContactsFromFile filePath
-
-            MessageBox.Show($"{filePath}") |> ignore
+            MessageBox.Show(fileContents, "Contacts") |> ignore
         with
         | :? FileNotFoundException ->
             MessageBox.Show("File not found! Please ensure the file path is correct.", "Error") |> ignore
         | :? System.Exception as ex ->
             MessageBox.Show($"An error occurred while loading the contacts: {ex.Message}", "Error") |> ignore
-    )
 
-
-
-
-    let btnSaveContacts = new Button(Text = "Save Contacts", Top = 540, Left = 150, Width = 500, Height = 40)
-    btnSaveContacts.Click.Add(fun _ ->
-        let filePath = InputBox("Enter The File Path to Save Contacts:", "Save Contacts")
-        if not (String.IsNullOrWhiteSpace filePath) then
-            saveContactsToFile filePath
-            MessageBox.Show($"Contacts Saved to {filePath} .", "Save Contacts") |> ignore
-
-        else
-            MessageBox.Show("Please provide a valid file path.", "Error") |> ignore
     )
 
 
@@ -280,7 +274,6 @@ let btnLoadContacts = new Button(Text = "View Contacts", Top = 460, Left = 150, 
     form.Controls.Add(btnDelete)
     form.Controls.Add(btnEdit)
     form.Controls.Add(btnLoadContacts)
-    form.Controls.Add(btnSaveContacts)
 
     form
 
@@ -293,72 +286,4 @@ let main argv =
     Application.Run(form)
     0
 
-
-
-
-
-
-
-
-
-// let rec menu () =
-//     printfn "\nContact Management System"
-//     printfn "1. Add Contact"
-//     printfn "2. Search Contact"
-//     printfn "3. Edit Contact"
-//     printfn "4. Delete Contact"
-//     printfn "5. Save Contacts to File"
-//     printfn "6. Load Contacts from File"
-//     printfn "7. Exit"
-//     printf "Choose an option: "
-//     let choice = System.Console.ReadLine()
-
-//     match choice with
-//     | "1" ->
-//         printf "Enter Name: "
-//         let name = System.Console.ReadLine()
-//         printf "Enter Phone Number: "
-//         let phone = System.Console.ReadLine()
-//         printf "Enter Email: "
-//         let email = System.Console.ReadLine()
-//         addContact name phone email
-//         menu ()
-//     | "2" ->
-//         printf "Enter Name or Phone Number to Search: "
-//         let key = System.Console.ReadLine()
-//         searchContact key
-//         menu ()
-//     | "3" ->
-//         printf "Enter Phone Number of Contact to Edit"
-//         let phoneNumber = System.Console.ReadLine()
-//         printf "Enter New Name: "
-//         let newName = System.Console.ReadLine()
-//         printf "Enter New Phone Number: "
-//         let newPhone = System.Console.ReadLine()
-//         printf "Enter New Email: "
-//         let newEmail = System.Console.ReadLine()
-//         editContact phoneNumber newName newPhone newEmail
-//         menu ()
-//     | "4" ->
-//         printf "Enter Phone Number of Contact to Delete: "
-//         let phoneNumber = System.Console.ReadLine()
-//         deleteContact phoneNumber
-//         menu ()
-//     | "5" ->
-//         printf "Enter File Path to Save Contacts: "
-//         let filePath = System.Console.ReadLine()
-//         saveContactsToFile filePath
-//         menu ()
-//     | "6" ->
-//         printf "Enter File Path to Load Contacts: "
-//         let filePath = System.Console.ReadLine()
-//         loadContactsFromFile filePath
-//         menu ()
-//     | "7" ->
-//         printfn "Exiting the program. Goodbye!"
-//     | _ ->
-//         printfn "Invalid option. Please try again."
-//         menu ()
-
-// menu ()
 
