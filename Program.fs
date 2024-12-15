@@ -17,6 +17,17 @@ let isValidEmail (email: string) =
     Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 // Toqa - add function
+let addContact name phoneNumber email =
+    if not (isValidPhoneNumber phoneNumber) then
+        printfn "Invalid phone number format."
+    elif not (isValidEmail email) then
+        printfn "Invalid email format."
+    elif contacts.ContainsKey(phoneNumber) then
+        printfn "A contact with this phone number already exists."
+    else
+        let newContact = { Name = name; PhoneNumber = phoneNumber; Email = email }
+        contacts <- contacts.Add(phoneNumber, newContact)
+        printfn "Contact added: %A" newContact
 
 // Basma - Search function
 let searchContact key =
@@ -64,6 +75,24 @@ let createForm () =
 
 
 // Toqa - add Button
+    let btnAdd = new Button(Text = "Add Contact", Top = 140, Left = 150, Width = 500, Height = 40)
+    btnAdd.Click.Add(fun _ ->
+        let name = InputBox("Enter Name:", "Add Contact")
+        let phone = InputBox("Enter Phone:", "Add Contact")
+        let email = InputBox("Enter Email:", "Add Contact")
+        
+        if String.IsNullOrWhiteSpace(name) || String.IsNullOrWhiteSpace(phone) || String.IsNullOrWhiteSpace(email) then
+            MessageBox.Show("All fields are required.", "Error") |> ignore
+        elif not (isValidPhoneNumber phone) then
+            MessageBox.Show("Invalid phone number format.", "Error") |> ignore
+        elif not (isValidEmail email) then
+            MessageBox.Show("Invalid email format.", "Error") |> ignore
+        elif contacts.ContainsKey(phone) then
+            MessageBox.Show("A contact with this phone number already exists.", "Error") |> ignore
+        else
+            addContact name phone email
+            MessageBox.Show("Contact added successfully.", "Success") |> ignore
+    )
 
 
 
