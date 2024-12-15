@@ -78,14 +78,21 @@ let editContact (phoneNumber: string) (newName: string) (newPhone: string) (newE
 
 
 // Bassant - Delete function
-let deleteContact phoneNumber =
-    if contacts.ContainsKey(phoneNumber) then
-        contacts <- contacts.Remove(phoneNumber)
-        printfn "Contact deleted."
+let deleteContact (phoneNumber: string) =
+    if File.Exists(filePath) then
+        let lines = File.ReadAllLines(filePath) |> Array.toList
+        let updatedLines =
+            lines
+            |> List.filter (fun line ->
+                not (String.IsNullOrWhiteSpace(line)) && not (line.Contains(phoneNumber))) // Explicitly specify 'phoneNumber' as string
+        if lines.Length = updatedLines.Length then
+            printfn "No contact found with phone number: %s" phoneNumber
+        else
+            File.WriteAllLines(filePath, updatedLines)
+            printfn "Contact with phone number %s deleted successfully." phoneNumber
     else
-        printfn "Contact not found."
-
-        
+        printfn "File not found."
+ 
 
 let saveContactsToFile (filePath: string) =
     use writer = new StreamWriter(filePath, append = true)
