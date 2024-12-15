@@ -56,6 +56,14 @@ let editContact phoneNumber newName newPhone newEmail =
 
 
 // Bassant - Delete function
+let deleteContact phoneNumber =
+    if contacts.ContainsKey(phoneNumber) then
+        contacts <- contacts.Remove(phoneNumber)
+        printfn "Contact deleted."
+    else
+        printfn "Contact not found."
+
+        
 
 let saveContactsToFile (filePath: string) =
     use writer = new StreamWriter(filePath, append = true)
@@ -168,6 +176,22 @@ let btnSearch = new Button(Text = "Search Contact", Top = 300, Left = 150, Width
 
 
 // Bassant - Delete Button
+let btnDelete = new Button(Text = "Delete Contact", Top = 380, Left = 150, Width = 500, Height = 40)
+    btnDelete.Click.Add(fun _ ->
+        let phone = InputBox("Enter The Number You Wanna Delete:", "Delete Contact")
+        
+        if String.IsNullOrWhiteSpace(phone) then
+            MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
+        elif not (isValidPhoneNumber phone) then
+            MessageBox.Show("Invalid phone number.", "Error") |> ignore
+        else
+            if contacts.ContainsKey(phone) then
+                deleteContact phone
+                MessageBox.Show($"Contact with phone number {phone} deleted successfully.", "Delete Contact") |> ignore
+            else
+                MessageBox.Show($"No contact found with phone number {phone}.", "Error") |> ignore
+    )
+
 
 
 
