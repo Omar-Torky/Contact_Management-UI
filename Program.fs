@@ -73,6 +73,26 @@ let saveContactsToFile (filePath: string) =
     printfn "Contacts saved to %s" filePath
 
 // Youssef - load contacts function
+let loadContactsFromFile (filePath: string) =
+    if File.Exists(filePath) then
+        try
+            use reader = new StreamReader(filePath)
+            let lines = reader.ReadToEnd().Split([| '\n' |], StringSplitOptions.RemoveEmptyEntries)
+            for line in lines do
+                let parts = line.Split(',')
+                if parts.Length = 3 then
+                    let name = parts.[0].Trim()
+                    let phoneNumber = parts.[1].Trim()
+                    let email = parts.[2].Trim()
+                    addContact name phoneNumber email
+                else
+                    printfn "Skipping invalid line: %s" line
+            printfn "Contacts loaded from %s" filePath
+        with
+        | :? System.Exception as ex ->
+            printfn "Error loading contacts: %s" ex.Message
+    else
+        printfn "File not found: %s" filePath
 
 
 open System
@@ -198,7 +218,20 @@ let btnDelete = new Button(Text = "Delete Contact", Top = 380, Left = 150, Width
 
 
 // Youssef - load contacts Button
+let btnLoadContacts = new Button(Text = "View Contacts", Top = 460, Left = 150, Width = 500, Height = 40)
+    btnLoadContacts.Click.Add(fun _ ->
+        try
+            let filePath = File.ReadAllText("File.txt")
 
+            // loadContactsFromFile filePath
+
+            MessageBox.Show($"{filePath}") |> ignore
+        with
+        | :? FileNotFoundException ->
+            MessageBox.Show("File not found! Please ensure the file path is correct.", "Error") |> ignore
+        | :? System.Exception as ex ->
+            MessageBox.Show($"An error occurred while loading the contacts: {ex.Message}", "Error") |> ignore
+    )
 
 
 
