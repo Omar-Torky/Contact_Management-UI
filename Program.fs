@@ -33,14 +33,19 @@ let addContact name phoneNumber email =
         printfn "Contact added: %A" newContact
 
 // Basma - Search function
-let searchContact key =
-    let results = 
-        contacts 
-        |> Map.filter (fun _ contact -> contact.Name.Contains(key : string) || contact.PhoneNumber.Contains(key : string))
-    if results.IsEmpty then
-        printfn "No contacts found."
+let searchContact (key: string) =
+    if File.Exists(filePath) then
+        let results =
+            File.ReadLines(filePath)
+            |> Seq.filter (fun line -> 
+                not (String.IsNullOrWhiteSpace(line)) && line.Contains(key)) // Explicitly specify 'key' is a string
+            |> Seq.toList
+        if results.IsEmpty then
+            printfn "No contacts found."
+        else
+            results |> List.iter (printfn "Found: %s")
     else
-        results |> Map.iter (fun _ contact -> printfn "%A" contact)
+        printfn "File not found."
 
 // Rahma - Edit function
 let editContact phoneNumber newName newPhone newEmail =
