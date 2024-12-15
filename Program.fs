@@ -48,19 +48,33 @@ let searchContact (key: string) =
         printfn "File not found."
 
 // Rahma - Edit function
-let editContact phoneNumber newName newPhone newEmail =
-    match contacts.TryFind(phoneNumber) with
-    | Some _ ->
-        if not (isValidPhoneNumber newPhone) then
+let editContact (phoneNumber: string) (newName: string) (newPhone: string) (newEmail: string) =
+    if not (File.Exists(filePath)) then
+        printfn "File not found."
+    else
+        let lines = File.ReadAllLines(filePath) |> Array.toList
+        let contactExists = 
+            lines
+            |> List.exists (fun line -> line.Contains(phoneNumber))
+
+        if not contactExists then
+            printfn "Contact not found."
+        elif not (isValidPhoneNumber newPhone) then
             printfn "Invalid phone number format."
         elif not (isValidEmail newEmail) then
             printfn "Invalid email format."
         else
-            let updatedContact = { Name = newName; PhoneNumber = newPhone; Email = newEmail }
-            contacts <- contacts.Remove(phoneNumber).Add(newPhone, updatedContact)
-            printfn "Contact updated: %A" updatedContact
-    | None -> printfn "Contact not found."
-
+            let updatedLines =
+                lines
+                |> List.map (fun line ->
+                    if line.Contains(phoneNumber) then
+                        let parts = line.Split(',')
+                        sprintf "%s,%s,%s" newName newPhone newEmail
+                    else
+                        line)
+            
+            File.WriteAllLines(filePath, updatedLines)
+            printfn "Contact updated: Name=%s, Phone=%s, Email=%s" newName newPhone newEmail
 
 
 // Bassant - Delete function
@@ -149,31 +163,25 @@ btnEdit.Click.Add(fun _ ->
     let phoneToEdit = InputBox("Enter Phone Number of the Contact to Edit:", "Edit Contact")
 
     if not (String.IsNullOrWhiteSpace phoneToEdit) then
-        match contacts.TryFind(phoneToEdit) with
-        | Some contact ->
-            let newName = InputBox($"Enter New Name (Current: {contact.Name}):", "Edit Contact")
-            let newPhone = InputBox($"Enter New Phone (Current: {contact.PhoneNumber}):", "Edit Contact")
-            let newEmail = InputBox($"Enter New Email (Current: {contact.Email}):", "Edit Contact")
+        let newName = InputBox("Enter New Name:", "Edit Contact")
+        let newPhone = InputBox("Enter New Phone:", "Edit Contact")
+        let newEmail = InputBox("Enter New Email:", "Edit Contact")
 
- 
-            if String.IsNullOrWhiteSpace(newName) || String.IsNullOrWhiteSpace(newPhone) || String.IsNullOrWhiteSpace(newEmail) then
-                MessageBox.Show("All fields are required.", "Error") |> ignore
-
-            elif not (isValidPhoneNumber newPhone) then
-                MessageBox.Show("Invalid phone number format.", "Error") |> ignore
-    
-            elif not (isValidEmail newEmail) then
-                MessageBox.Show("Invalid email format.", "Error") |> ignore
-            
-            else
-                editContact phoneToEdit newName newPhone newEmail
-                MessageBox.Show("Contact Edited Successfully.", "Success") |> ignore
-        | None ->
-            MessageBox.Show("No Contact Found With This Phone Number.", "Error") |> ignore
+        // Check if new fields are valid before editing the contact
+        if String.IsNullOrWhiteSpace(newName) || String.IsNullOrWhiteSpace(newPhone) || String.IsNullOrWhiteSpace(newEmail) then
+            MessageBox.Show("All fields are required.", "Error") |> ignore
+        elif not (isValidPhoneNumber newPhone) then
+            MessageBox.Show("Invalid phone number format.", "Error") |> ignore
+        elif not (isValidEmail newEmail) then
+            MessageBox.Show("Invalid email format.", "Error") |> ignore
+        else
+            // If all fields are valid, proceed to edit the contact
+            editContact phoneToEdit newName newPhone newEmail
+            MessageBox.Show("Contact updated successfully.", "Success") |> ignore
     else
         MessageBox.Show("Phone number cannot be empty.", "Error") |> ignore
 )
-
+    
 
 
 
