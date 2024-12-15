@@ -9,6 +9,7 @@ type Contact = {
 }
 
 let mutable contacts = Map.empty<string, Contact>
+let filePath = "contacts.txt"
 
 let isValidPhoneNumber (phoneNumber: string) =
     Regex.IsMatch(phoneNumber, @"^\+?[0-9]{10,15}$")
