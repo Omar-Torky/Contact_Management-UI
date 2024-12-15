@@ -28,6 +28,8 @@ let addContact name phoneNumber email =
     else
         let newContact = { Name = name; PhoneNumber = phoneNumber; Email = email }
         contacts <- contacts.Add(phoneNumber, newContact)
+        let contactLine = $"{name},{phoneNumber},{email}"
+        File.AppendAllText(filePath, contactLine + Environment.NewLine)
         printfn "Contact added: %A" newContact
 
 // Basma - Search function
